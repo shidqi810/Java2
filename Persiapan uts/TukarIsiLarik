@@ -1,0 +1,84 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+public class TukarIsiLarik {
+	static int[] larikSatu = new int[25];
+    static int[] larikDua = new int[25];
+	static int ukuranLarik;
+	static int nilaiX;
+	static int start = 0;
+	static int step = 0;
+
+	public static void main(String[] args) {
+		System.out.print("input jumlah n larik = ");
+		ukuranLarik = inputData();
+        System.out.println("~~~Untuk Larik Pertama~~~");
+		bacaLarikSatu();
+
+        System.out.println("~~~Untuk Larik Kedua~~~");
+        bacaLarikDua();
+
+        tukarIsi();
+
+        System.out.println("~~~Untuk Larik Pertama~~~");
+		cetakLarikSatu();
+
+        System.out.println("~~~Untuk Larik Kedua~~~");
+        cetakLarikDua();
+	}
+
+	private static int inputData() {
+		BufferedReader bfr =  new BufferedReader(new InputStreamReader(System.in));
+
+		String angkaInput = null;
+		try {
+			angkaInput = bfr.readLine();
+		} 
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+
+		int Data = Integer.valueOf(angkaInput).intValue();
+		return Data;
+	}
+
+	private static void bacaLarikSatu() {
+		for(int j = 0; j<ukuranLarik; j++) {
+			System.out.print("Masukan Larik ke - " + (j +1) + " = ");
+				larikSatu[j] = inputData();
+		}
+	}
+
+    private static void bacaLarikDua() {
+		for(int j = 0; j<ukuranLarik; j++) {
+			System.out.print("Masukan Larik ke - " + (j +1) + " = ");
+				larikDua[j] = inputData();
+		}
+	}
+    
+    private static void tukarIsi() {
+        int temp = 0;
+        for(int j = 0; j<ukuranLarik; j++) {
+			temp = larikSatu[j];
+            larikSatu[j] = larikDua[j];
+            larikDua[j] = temp;
+		}
+    }
+
+	private static void cetakLarikSatu() {
+		int l = 1;
+		for(int j = 0; j<ukuranLarik; j++) {
+			System.out.println("Larik ke - " + l + " = " + larikSatu[j]);
+			l++;
+		}
+	}
+
+    private static void cetakLarikDua() {
+		int l = 1;
+		for(int j = 0; j<ukuranLarik; j++) {
+			System.out.println("Larik ke - " + l + " = " + larikDua[j]);
+			l++;
+		}
+	}
+}

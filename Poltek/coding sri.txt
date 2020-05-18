@@ -1,0 +1,179 @@
+#include <SoftwareSerial.h>
+#include <SD.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <RTClib.h>
+#include <DS3231.h>
+#include <Servo.h>
+
+#define trigPin 7
+#define echoPin 6
+#define trigPin2 9
+#define echoPin2 8
+
+Servo myservo;
+int angle =0;
+int angleStep =50;
+
+File myFile;
+DS3231 rtc(SDA, SCL);
+int pinCS = 4 ;
+SoftwareSerial mySerial (2, 3);
+char buffer[64];
+size_t buflen;
+float diff, perc;
+float distance, distance2;
+float duration;
+float max = 300; // tinggi maksimal dari kotak sampah dalam cm
+
+void setup() {
+mySerial.begin (9600);
+Serial.begin (9600);
+rtc.begin();
+  rtc.setTime(14, 19, 0);
+  rtc.setDate(21, 8, 2019);
+myservo.attach(5); 
+pinMode(trigPin2, OUTPUT);
+pinMode(echoPin2, INPUT);// put your setup code here, to run once:
+pinMode(pinCS, OUTPUT);
+buflen = 0;
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+delay(100);
+Serial.print("Initializing SD card..."); // cek ketersediaan modul sd card
+if (!SD.begin(4)) {
+Serial.println("Card failed, or not present");
+return;
+}
+Serial.println("card initialized.");
+}
+
+void loop() {
+  digitalWrite(trigPin2, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin2, LOW);
+  duration = pulseIn(echoPin2, HIGH);
+  distance2 = duration*0.034/2;
+
+myservo.write(0);
+  if(distance2 <= 10){
+  myservo.write(90);
+  Serial.println("Terbuka");
+  }
+  else {
+    myservo.write(-90);
+    Serial.println("Tertutup");
+  }
+getRtc();
+ultraSonic();
+writeSD();
+}
+
+void getRtc (){
+// Send date
+Serial.print(rtc.getDateStr());
+Serial.print(" / ");
+// Send time
+Serial.print(rtc.getTimeStr());
+Serial.print (" / ");
+// Wait one second before repeating :)
+delay (100);
+}
+
+void ultraSonic(){
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+duration = pulseIn(echoPin, HIGH);
+Serial.print("ini durasi ");
+Serial.println(duration);
+distance = duration * 0.034/2;
+Serial.print("ini distance ");
+Serial.println(distance);
+diff = max - distance;
+Serial.print("ini diff ");
+Serial.println(diff);
+// 'diff' variable tells u that, how much the Garbage Bin is Left to fill.
+
+if (diff >= 280)
+{
+Serial.println("Kotak Sampah Sudah Penuh");
+SendMessage(); // pemanggilan fungsi kirim SMS.
+}
+else
+{
+Serial.print("Kotak sampah terisi ");
+Serial.print(distance);
+Serial.print("cm ");
+}
+delay(5000);
+}
+
+void SendMessage(){
+mySerial.write("AT+CMGF=1\r\n"); //Sets the GSM Modul in Text Mode
+Serial.println ("SIM 800L Ready");
+delay(5000); // Delay of 1000 milli seconds or 1 second
+Serial.println("Kirim SMS Dimulai");
+mySerial.println("AT+CMGS=\"081268372662\"\r\n"); // Replace x with mobile number
+delay(500);
+mySerial.write("Kotak Sampah Sudah Penuh."); // The SMS text you want to send
+delay(500);
+mySerial.write((char)26);
+delay(5000);
+
+mySerial.write("AT+CMGF=1\r\n"); //Sets the GSM Modul in Text Mode
+Serial.println ("SIM 800L Ready");
+delay(5000); // Delay of 1000 milli seconds or 1 second
+Serial.println("Kirim SMS Dimulai");
+mySerial.println("AT+CMGS=\"088286523503\"\r\n"); // Replace x with mobile number
+delay(500);
+mySerial.write("Kotak Sampah Sudah Penuh."); // The SMS text you want to send
+delay(500);
+mySerial.write((char)26);
+delay(5000);
+
+mySerial.println("AT+CMGS=\"082282185595\"\r\n"); // Replace x with mobile number
+delay(500);
+mySerial.write("Kotak Sampah Sudah Penuh."); // The SMS text you want to send
+delay(500);
+mySerial.write((char)26);
+delay(5000);
+
+mySerial.write("AT+CMGF=1\r\n"); //Sets the GSM Modul in Text Mode
+Serial.println ("SIM 800L Ready");
+delay(5000); // Delay of 1000 milli seconds or 1 second
+Serial.println("Kirim SMS Dimulai");
+mySerial.println("AT+CMGS=\"0895368164672\"\r\n"); // Replace x with mobile number
+delay(500);
+mySerial.write("Kotak Sampah Sudah Penuh."); // The SMS text you want to send
+delay(500);
+mySerial.write((char)26);
+delay(500);
+Serial.println ("SMS telah dikirim");
+}
+
+void writeSD(){
+File myFile = SD.open("test.txt", FILE_WRITE);
+if (myFile) {
+myFile.print(rtc.getDateStr());
+myFile.print(" / ");
+myFile.print(rtc.getTimeStr());
+myFile.print (" / ");
+myFile.print("Kotak sampah terisi ");
+myFile.print(perc);
+myFile.print("% ");
+myFile.print(distance);
+myFile.print(" cm");
+myFile.println();
+myFile.close();
+}
+// if the file didn't open, print an error:
+else {
+Serial.println("error opening test.txt");
+}
+delay(100);
+}
